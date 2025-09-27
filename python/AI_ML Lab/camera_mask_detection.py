@@ -122,34 +122,65 @@ def main():
                     label = f"Error: {str(e)[:20]}..."
                     color = (0, 255, 255)  # Yellow
             
-            # Draw bounding box
-            cv2.rectangle(frame, (x, y), (x+w, y+h), color, 2)
+            # Draw modern bounding box with rounded corners effect
+            thickness = 3
+            # Main rectangle
+            cv2.rectangle(frame, (x, y), (x+w, y+h), color, thickness)
             
-            # Draw label background
+            # Corner accents for modern look
+            corner_size = 15
+            cv2.line(frame, (x, y), (x + corner_size, y), color, thickness + 2)
+            cv2.line(frame, (x, y), (x, y + corner_size), color, thickness + 2)
+            cv2.line(frame, (x + w, y), (x + w - corner_size, y), color, thickness + 2)
+            cv2.line(frame, (x + w, y), (x + w, y + corner_size), color, thickness + 2)
+            cv2.line(frame, (x, y + h), (x + corner_size, y + h), color, thickness + 2)
+            cv2.line(frame, (x, y + h), (x, y + h - corner_size), color, thickness + 2)
+            cv2.line(frame, (x + w, y + h), (x + w - corner_size, y + h), color, thickness + 2)
+            cv2.line(frame, (x + w, y + h), (x + w, y + h - corner_size), color, thickness + 2)
+            
+            # Modern label background with transparency
             (text_width, text_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)
-            cv2.rectangle(frame, (x, y-text_height-10), (x+text_width, y), color, -1)
+            label_y = y - 15
+            if label_y < text_height + 10:
+                label_y = y + h + text_height + 15
+                
+            # Semi-transparent background
+            overlay = frame.copy()
+            cv2.rectangle(overlay, (x, label_y - text_height - 8), (x + text_width + 16, label_y + 8), color, -1)
+            cv2.addWeighted(overlay, 0.8, frame, 0.2, 0, frame)
             
-            # Draw label text
-            cv2.putText(frame, label, (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+            # Clean label text
+            cv2.putText(frame, label, (x + 8, label_y - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         
-        # Add info overlay
+        # Add clean info overlay
         if show_info:
+            h, w = frame.shape[:2]
+            
+            # Semi-transparent background for info
+            overlay = frame.copy()
+            cv2.rectangle(overlay, (5, 5), (350, 90), (40, 40, 40), -1)
+            cv2.addWeighted(overlay, 0.8, frame, 0.2, 0, frame)
+            
+            # Modern info display
             info_y = 30
-            cv2.putText(frame, f"Model: {'✅ Active' if model else '❌ Face Only'}", 
-                       (10, info_y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+            cv2.putText(frame, f"AI Model: {'ACTIVE' if model else 'FACE ONLY'}", 
+                       (15, info_y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (100, 255, 100) if model else (255, 255, 100), 2)
             
-            cv2.putText(frame, f"Faces: {len(faces)} | Frame: {frame_count}", 
-                       (10, info_y + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            cv2.putText(frame, f"Detections: {len(faces)} | Frame: {frame_count:,}", 
+                       (15, info_y + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
             
-            cv2.putText(frame, "Controls: q=quit, s=save, space=toggle", 
-                       (10, frame.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            # Clean controls at bottom
+            cv2.rectangle(overlay, (w - 300, h - 35), (w - 5, h - 5), (40, 40, 40), -1)
+            cv2.addWeighted(overlay, 0.8, frame, 0.2, 0, frame)
+            cv2.putText(frame, "Q:Quit  S:Save  SPACE:Toggle  ESC:Exit", 
+                       (w - 295, h - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1)
         
         # Display frame
-        cv2.imshow('Face Mask Detection', frame)
+        cv2.imshow('Face Mask Detection - Clean Interface', frame)
         
         # Handle keyboard input
         key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
+        if key == ord('q') or key == 27:  # Q or ESC
             break
         elif key == ord('s'):
             filename = f"face_mask_detection_{frame_count:06d}.jpg"
