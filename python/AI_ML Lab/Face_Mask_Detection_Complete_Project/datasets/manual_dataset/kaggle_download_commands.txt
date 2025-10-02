@@ -1,0 +1,26 @@
+# Face Mask Dataset Kaggle Downloader
+# Run these commands in your terminal:
+
+# 1. Install Kaggle API
+pip install kaggle
+
+# 2. Download datasets (choose one):
+
+# Option A: 12K Images Dataset (Recommended for beginners)
+kaggle datasets download -d omkargurav/face-mask-dataset
+
+# Option B: 7K Images with 3 classes
+kaggle datasets download -d andrewmvd/face-mask-detection
+
+# Option C: COVID-19 Dataset with bounding boxes
+kaggle datasets download -d wobotintelligence/face-mask-detection-dataset
+
+# 3. Extract downloaded file
+# Windows: Use WinRAR/7-Zip or Python zipfile
+# Linux/Mac: unzip filename.zip -d Face_Mask_Dataset/
+
+# 4. Organize data structure:
+# Face_Mask_Dataset/
+#   ├── with_mask/
+#   ├── without_mask/
+#   └── test/

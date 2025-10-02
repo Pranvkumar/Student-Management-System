@@ -1,0 +1,18 @@
+
+KAGGLEHUB DATASET DOWNLOADED
+===========================
+
+Original Dataset Path: C:\Users\Prana\.cache\kagglehub\datasets\omkargurav\face-mask-dataset\versions\1
+Organized Dataset Path: Face_Mask_Dataset_Downloaded
+
+NEXT STEPS:
+1. Check Face_Mask_Dataset_Downloaded/original/ for raw data
+2. Organize images into:
+   - Face_Mask_Dataset_Downloaded/with_mask/
+   - Face_Mask_Dataset_Downloaded/without_mask/
+3. Run your face mask detection training
+
+DATASET INFO:
+- Source: omkargurav/face-mask-dataset
+- Downloaded via: KaggleHub API
+- Date: 1758898540.1206746
