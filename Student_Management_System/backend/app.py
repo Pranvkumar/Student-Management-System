@@ -24,6 +24,14 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
+    # If user is already logged in, redirect to appropriate dashboard
+    if 'role' in session:
+        if session['role'] == 'admin':
+            return redirect(url_for('admin_dashboard'))
+        elif session['role'] == 'student':
+            return redirect(url_for('student_dashboard'))
+        elif session['role'] == 'faculty':
+            return redirect(url_for('faculty_dashboard'))
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -48,8 +56,10 @@ def login():
                 return redirect(url_for('faculty_dashboard'))
         else:
             flash('Invalid username or password', 'error')
+            return redirect(url_for('index'))
     
-    return render_template('login.html')
+    # If accessed via GET, redirect to index
+    return redirect(url_for('index'))
 
 @app.route('/logout')
 def logout():

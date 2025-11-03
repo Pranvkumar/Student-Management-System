@@ -1,52 +1,446 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management System - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block title %}Home - Student Management System{% endblock %}
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
 
-{% block content %}
-<div class="hero-section">
-    <h1>Welcome to Student Management System</h1>
-    <p class="lead">A comprehensive platform for managing students, faculty, courses, and academic records</p>
-    
-    <div class="hero-buttons">
-        <a href="{{ url_for('login') }}" class="btn btn-large btn-primary">Login to Portal</a>
+        .animated-background {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+            overflow: hidden;
+        }
+
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(72, 209, 204, 0.6);
+            border-radius: 50%;
+            animation: float 20s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0) scale(1);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateY(-100vh) translateX(50px) scale(1.2);
+                opacity: 0.4;
+            }
+            90% {
+                opacity: 0.3;
+            }
+        }
+
+        .shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .shape {
+            position: absolute;
+            opacity: 0.1;
+            animation: rotate 30s infinite linear;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .triangle {
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 35px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .circle {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+        }
+
+        .container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            z-index: 10;
+        }
+
+        .login-card {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.95) 0%, rgba(139, 92, 246, 0.95) 100%);
+            padding: 50px 45px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            width: 450px;
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 48px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .logo-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .welcome-text {
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            color: white;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 18px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            background: white;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-control:focus {
+            outline: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 14px;
+        }
+
+        .remember-me input[type="checkbox"] {
+            margin-right: 8px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .forgot-password {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            transition: opacity 0.3s;
+        }
+
+        .forgot-password:hover {
+            opacity: 0.8;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.6);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .alert {
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.2);
+            border-left: 4px solid #ef4444;
+            color: white;
+        }
+
+        .alert-success {
+            background: rgba(34, 197, 94, 0.2);
+            border-left: 4px solid #22c55e;
+            color: white;
+        }
+
+        .demo-credentials {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+
+        .demo-credentials h4 {
+            color: white;
+            font-size: 14px;
+            margin-bottom: 12px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .credential-item {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 13px;
+            margin: 8px 0;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+        }
+
+        .credential-item strong {
+            color: white;
+            display: inline-block;
+            width: 80px;
+        }
+
+        @media (max-width: 500px) {
+            .login-card {
+                width: 90%;
+                padding: 30px 25px;
+            }
+
+            .logo {
+                font-size: 36px;
+            }
+
+            .welcome-text {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-background">
+        <div class="particles" id="particles"></div>
+        <div class="shapes" id="shapes"></div>
     </div>
-</div>
 
-<div class="features-section">
-    <h2>System Features</h2>
-    <div class="features-grid">
-        <div class="feature-card">
-            <h3>Admin Portal</h3>
-            <ul>
-                <li>Manage Students & Faculty</li>
-                <li>Course Management</li>
-                <li>Fee Management</li>
-                <li>Generate Reports</li>
-                <li>System Analytics</li>
-            </ul>
-        </div>
-        
-        <div class="feature-card">
-            <h3>Student Portal</h3>
-            <ul>
-                <li>View Enrolled Courses</li>
-                <li>Check Attendance</li>
-                <li>View Grades & GPA</li>
-                <li>Fee Status</li>
-                <li>Announcements</li>
-            </ul>
-        </div>
-        
-        <div class="feature-card">
-            <h3>Faculty Portal</h3>
-            <ul>
-                <li>View Assigned Courses</li>
-                <li>Mark Attendance</li>
-                <li>Enter Grades</li>
-                <li>Student Reports</li>
-                <li>Timetable Management</li>
-            </ul>
+    <div class="container">
+        <div class="login-card">
+            <div class="logo-section">
+                <div class="logo">SMS</div>
+                <div class="logo-subtitle">University Management</div>
+            </div>
+
+            <h1 class="welcome-text">Welcome to MyPortal</h1>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="form-group">
+                    <label for="username">User Name</label>
+                    <input type="text" id="username" name="username" class="form-control" 
+                           placeholder="Enter your username" required autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" 
+                           placeholder="Enter your password" required>
+                </div>
+
+                <div class="remember-forgot">
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember">
+                        Remember me
+                    </label>
+                    <a href="#" class="forgot-password">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="login-button">Login</button>
+            </form>
+
+            <div class="demo-credentials">
+                <h4>Demo Credentials</h4>
+                <div class="credential-item">
+                    <strong>Admin:</strong> admin / admin123
+                </div>
+                <div class="credential-item">
+                    <strong>Student:</strong> john.student / pass123
+                </div>
+                <div class="credential-item">
+                    <strong>Faculty:</strong> dr.smith / faculty123
+                </div>
+            </div>
         </div>
     </div>
-</div>
-{% endblock %}
+
+    <script>
+        // Create animated particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 80;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                const size = Math.random() * 6 + 2;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Create floating shapes
+        function createShapes() {
+            const shapesContainer = document.getElementById('shapes');
+            const shapeCount = 15;
+
+            for (let i = 0; i < shapeCount; i++) {
+                const shape = document.createElement('div');
+                shape.className = 'shape';
+                
+                if (Math.random() > 0.5) {
+                    shape.innerHTML = '<div class="triangle"></div>';
+                } else {
+                    shape.innerHTML = '<div class="circle"></div>';
+                }
+                
+                shape.style.left = Math.random() * 100 + '%';
+                shape.style.top = Math.random() * 100 + '%';
+                shape.style.animationDuration = (Math.random() * 20 + 20) + 's';
+                shape.style.animationDelay = Math.random() * 5 + 's';
+                
+                shapesContainer.appendChild(shape);
+            }
+        }
+
+        // Initialize animations
+        createParticles();
+        createShapes();
+
+        // Add floating animation to shapes
+        document.querySelectorAll('.shape').forEach(shape => {
+            const floatAnimation = `
+                @keyframes float-${Math.random()} {
+                    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+                    25% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) rotate(90deg); }
+                    50% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) rotate(180deg); }
+                    75% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) rotate(270deg); }
+                }
+            `;
+            const style = document.createElement('style');
+            style.innerHTML = floatAnimation;
+            document.head.appendChild(style);
+        });
+    </script>
+</body>
+</html>
