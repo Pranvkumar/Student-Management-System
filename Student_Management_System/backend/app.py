@@ -1,11 +1,26 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from database import DatabaseConnection
 from datetime import datetime
+import pandas as pd
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.secret_key = 'your_secret_key_here_change_this'
 
+# Configure upload settings
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
+ALLOWED_EXTENSIONS = {'xlsx', 'xls'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Create upload folder if it doesn't exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 db = DatabaseConnection()
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/')
 def index():
@@ -88,6 +103,158 @@ def admin_add_student():
             flash('Error adding student', 'error')
     
     return render_template('admin/add_student.html')
+
+@app.route('/admin/students/upload', methods=['GET', 'POST'])
+def admin_upload_students():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        # Check if file was uploaded
+        if 'file' not in request.files:
+            flash('No file uploaded', 'error')
+            return redirect(request.url)
+        
+        file = request.files['file']
+        
+        # Check if file is selected
+        if file.filename == '':
+            flash('No file selected', 'error')
+            return redirect(request.url)
+        
+        # Check if file type is allowed
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            
+            try:
+                # Read Excel file
+                df = pd.read_excel(filepath)
+                
+                # Validate required columns
+                required_columns = ['username', 'password', 'email', 'first_name', 'last_name', 
+                                  'dob', 'gender', 'phone', 'address', 'program', 'semester']
+                
+                missing_columns = [col for col in required_columns if col not in df.columns]
+                if missing_columns:
+                    flash(f'Missing required columns: {", ".join(missing_columns)}', 'error')
+                    os.remove(filepath)
+                    return redirect(request.url)
+                
+                # Process each row
+                success_count = 0
+                error_count = 0
+                errors = []
+                
+                for index, row in df.iterrows():
+                    try:
+                        # Convert date format if needed
+                        dob = row['dob']
+                        if isinstance(dob, pd.Timestamp):
+                            dob = dob.strftime('%Y-%m-%d')
+                        
+                        # Call stored procedure to add student
+                        result = db.call_procedure('sp_AddStudent', (
+                            str(row['username']),
+                            str(row['password']),
+                            str(row['email']),
+                            str(row['first_name']),
+                            str(row['last_name']),
+                            str(dob),
+                            str(row['gender']),
+                            str(row['phone']),
+                            str(row['address']),
+                            str(row['program']),
+                            int(row['semester'])
+                        ))
+                        
+                        if result:
+                            success_count += 1
+                        else:
+                            error_count += 1
+                            errors.append(f"Row {index + 2}: Failed to add student")
+                    
+                    except Exception as e:
+                        error_count += 1
+                        errors.append(f"Row {index + 2}: {str(e)}")
+                
+                # Remove uploaded file
+                os.remove(filepath)
+                
+                # Display results
+                if success_count > 0:
+                    flash(f'Successfully added {success_count} student(s)', 'success')
+                if error_count > 0:
+                    flash(f'Failed to add {error_count} student(s)', 'error')
+                    for error in errors[:5]:  # Show first 5 errors
+                        flash(error, 'error')
+                
+                return redirect(url_for('admin_students'))
+            
+            except Exception as e:
+                flash(f'Error processing file: {str(e)}', 'error')
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                return redirect(request.url)
+        else:
+            flash('Invalid file type. Please upload .xlsx or .xls file', 'error')
+            return redirect(request.url)
+    
+    return render_template('admin/upload_students.html')
+
+@app.route('/admin/students/download-template')
+def download_student_template():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    
+    from flask import send_file
+    from io import BytesIO
+    
+    # Create sample Excel template
+    template_data = {
+        'username': ['john.doe', 'jane.smith'],
+        'password': ['password123', 'password456'],
+        'email': ['john.doe@example.com', 'jane.smith@example.com'],
+        'first_name': ['John', 'Jane'],
+        'last_name': ['Doe', 'Smith'],
+        'dob': ['2000-01-15', '2001-03-22'],
+        'gender': ['Male', 'Female'],
+        'phone': ['1234567890', '9876543210'],
+        'address': ['123 Main St, City', '456 Oak Ave, Town'],
+        'program': ['B.Tech CSE', 'B.Tech ECE'],
+        'semester': [3, 5]
+    }
+    
+    df = pd.DataFrame(template_data)
+    
+    # Create Excel file in memory
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Students')
+        
+        # Auto-adjust column widths
+        worksheet = writer.sheets['Students']
+        for column in worksheet.columns:
+            max_length = 0
+            column_letter = column[0].column_letter
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(cell.value)
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            worksheet.column_dimensions[column_letter].width = adjusted_width
+    
+    output.seek(0)
+    
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name='student_upload_template.xlsx'
+    )
 
 @app.route('/admin/faculty')
 def admin_faculty():

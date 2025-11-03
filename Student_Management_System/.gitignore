@@ -53,3 +53,8 @@ Thumbs.db
 # Credentials (important!)
 config.py
 credentials.json
+
+# Uploads
+backend/uploads/
+*.xlsx
+*.xls

@@ -386,6 +386,11 @@ body {
     color: #2c3e50;
 }
 
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
 .table-container {
     background: white;
     padding: 2rem;

@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Students - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>Upload Students from Excel</h1>
+        <a href="{{ url_for('admin_students') }}" class="btn btn-secondary">Back to Students</a>
+    </div>
+
+    <div class="card">
+        <h2>Upload Excel File</h2>
+        
+        <div class="info-box">
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Download the sample Excel template below</li>
+                <li>Fill in student details following the column format</li>
+                <li>Upload the completed Excel file</li>
+            </ol>
+            
+            <h3>Required Columns:</h3>
+            <ul>
+                <li><strong>username</strong> - Unique username for login</li>
+                <li><strong>password</strong> - Student password</li>
+                <li><strong>email</strong> - Student email address</li>
+                <li><strong>first_name</strong> - First name</li>
+                <li><strong>last_name</strong> - Last name</li>
+                <li><strong>dob</strong> - Date of birth (YYYY-MM-DD format)</li>
+                <li><strong>gender</strong> - Gender (Male/Female/Other)</li>
+                <li><strong>phone</strong> - Contact number</li>
+                <li><strong>address</strong> - Full address</li>
+                <li><strong>program</strong> - Program name (e.g., B.Tech CSE, MBA)</li>
+                <li><strong>semester</strong> - Current semester (number)</li>
+            </ul>
+        </div>
+
+        <div class="download-template">
+            <h3>Download Sample Template</h3>
+            <a href="{{ url_for('download_student_template') }}" class="btn btn-primary">
+                <i class="icon">📥</i> Download Excel Template
+            </a>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="upload-form">
+            <div class="form-group">
+                <label for="file">Select Excel File (.xlsx or .xls):</label>
+                <input type="file" id="file" name="file" accept=".xlsx,.xls" required>
+                <small>Maximum file size: 16MB</small>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Upload Students</button>
+                <a href="{{ url_for('admin_students') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .info-box {
+        background-color: #e3f2fd;
+        padding: 20px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+
+    .info-box h3 {
+        color: #1976d2;
+        margin-top: 15px;
+        margin-bottom: 10px;
+    }
+
+    .info-box h3:first-child {
+        margin-top: 0;
+    }
+
+    .info-box ul, .info-box ol {
+        margin: 10px 0;
+        padding-left: 25px;
+    }
+
+    .info-box li {
+        margin: 5px 0;
+    }
+
+    .download-template {
+        background-color: #fff3e0;
+        padding: 20px;
+        border-radius: 5px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .download-template h3 {
+        color: #f57c00;
+        margin-bottom: 15px;
+    }
+
+    .upload-form {
+        background-color: #f5f5f5;
+        padding: 30px;
+        border-radius: 5px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 8px;
+        color: #333;
+    }
+
+    .form-group input[type="file"] {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        border: 2px dashed #ccc;
+        border-radius: 5px;
+        background-color: white;
+        cursor: pointer;
+    }
+
+    .form-group input[type="file"]:hover {
+        border-color: #4CAF50;
+    }
+
+    .form-group small {
+        display: block;
+        margin-top: 5px;
+        color: #666;
+        font-size: 0.9em;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .icon {
+        margin-right: 5px;
+    }
+
+    @media (max-width: 768px) {
+        .info-box ul, .info-box ol {
+            padding-left: 20px;
+        }
+
+        .upload-form {
+            padding: 20px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .form-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
