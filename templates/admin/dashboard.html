@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Admin Dashboard</h1>
+</div>
+
+<div class="stats-container">
+    <div class="stat-card">
+        <h3>Total Students</h3>
+        <p class="stat-number">{{ stats.total_students }}</p>
+    </div>
+    
+    <div class="stat-card">
+        <h3>Total Faculty</h3>
+        <p class="stat-number">{{ stats.total_faculty }}</p>
+    </div>
+    
+    <div class="stat-card">
+        <h3>Total Courses</h3>
+        <p class="stat-number">{{ stats.total_courses }}</p>
+    </div>
+</div>
+
+<div class="admin-menu">
+    <h2>Quick Actions</h2>
+    <div class="menu-grid">
+        <a href="{{ url_for('admin_students') }}" class="menu-item">
+            <h3>Manage Students</h3>
+            <p>View, add, edit student records</p>
+        </a>
+        
+        <a href="{{ url_for('admin_faculty') }}" class="menu-item">
+            <h3>Manage Faculty</h3>
+            <p>View, add, edit faculty members</p>
+        </a>
+        
+        <a href="{{ url_for('admin_courses') }}" class="menu-item">
+            <h3>Manage Courses</h3>
+            <p>View, add, edit courses</p>
+        </a>
+        
+        <a href="#" class="menu-item">
+            <h3>Fee Management</h3>
+            <p>Track student fees and payments</p>
+        </a>
+        
+        <a href="#" class="menu-item">
+            <h3>Reports</h3>
+            <p>Generate academic reports</p>
+        </a>
+        
+        <a href="#" class="menu-item">
+            <h3>Announcements</h3>
+            <p>Post announcements</p>
+        </a>
+    </div>
+</div>
+{% endblock %}

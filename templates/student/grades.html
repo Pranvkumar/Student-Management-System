@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}My Grades{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>My Grades</h1>
+    <a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Course Name</th>
+                <th>Assessment Type</th>
+                <th>Marks Obtained</th>
+                <th>Max Marks</th>
+                <th>Percentage</th>
+                <th>Grade</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for grade in grades %}
+            <tr>
+                <td>{{ grade.course_name }}</td>
+                <td>{{ grade.assessment_type }}</td>
+                <td>{{ grade.marks_obtained }}</td>
+                <td>{{ grade.max_marks }}</td>
+                <td>{{ ((grade.marks_obtained / grade.max_marks) * 100)|round(2) }}%</td>
+                <td><span class="badge badge-{{ 'success' if grade.grade_letter in ['A+', 'A'] else 'primary' }}">{{ grade.grade_letter }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

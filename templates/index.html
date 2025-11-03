@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Student Management System{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <h1>Welcome to Student Management System</h1>
+    <p class="lead">A comprehensive platform for managing students, faculty, courses, and academic records</p>
+    
+    <div class="hero-buttons">
+        <a href="{{ url_for('login') }}" class="btn btn-large btn-primary">Login to Portal</a>
+    </div>
+</div>
+
+<div class="features-section">
+    <h2>System Features</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <h3>Admin Portal</h3>
+            <ul>
+                <li>Manage Students & Faculty</li>
+                <li>Course Management</li>
+                <li>Fee Management</li>
+                <li>Generate Reports</li>
+                <li>System Analytics</li>
+            </ul>
+        </div>
+        
+        <div class="feature-card">
+            <h3>Student Portal</h3>
+            <ul>
+                <li>View Enrolled Courses</li>
+                <li>Check Attendance</li>
+                <li>View Grades & GPA</li>
+                <li>Fee Status</li>
+                <li>Announcements</li>
+            </ul>
+        </div>
+        
+        <div class="feature-card">
+            <h3>Faculty Portal</h3>
+            <ul>
+                <li>View Assigned Courses</li>
+                <li>Mark Attendance</li>
+                <li>Enter Grades</li>
+                <li>Student Reports</li>
+                <li>Timetable Management</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
