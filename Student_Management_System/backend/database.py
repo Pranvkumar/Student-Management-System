@@ -7,7 +7,7 @@ class DatabaseConnection:
         self.host = 'localhost'
         self.database = 'student_management_system'
         self.user = 'root'
-        self.password = ''  # Change this to your MySQL root password
+        self.password = 'PRANVKUMAR.11587@STU.UPES.AC.IN'  # Change this to your MySQL root password
         
     def get_connection(self):
         try:
