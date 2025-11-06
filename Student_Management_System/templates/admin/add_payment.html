@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Add Payment - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 40px auto;">
+    <div class="page-header">
+        <h1>Record Payment</h1>
+        <a href="{{ url_for('admin_fees') }}" class="btn btn-secondary">Back to Fees</a>
+    </div>
+
+    <div class="card">
+        <h2>Fee Details</h2>
+        <div class="fee-info">
+            <p><strong>Student:</strong> {{ fee.first_name }} {{ fee.last_name }}</p>
+            <p><strong>Program:</strong> {{ fee.program }}</p>
+            <p><strong>Fee Type:</strong> {{ fee.fee_type }}</p>
+            <p><strong>Total Amount:</strong> ₹{{ "{:,.2f}".format(fee.total_amount) }}</p>
+            <p><strong>Due Date:</strong> {{ fee.due_date }}</p>
+            <p><strong>Status:</strong> <span class="badge badge-{{ 'success' if fee.status == 'Paid' else 'warning' }}">{{ fee.status }}</span></p>
+        </div>
+    </div>
+
+    {% if payments %}
+    <div class="card">
+        <h2>Payment History</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Payment Date</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Transaction ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                <tr>
+                    <td>{{ payment.payment_date }}</td>
+                    <td>₹{{ "{:,.2f}".format(payment.amount) }}</td>
+                    <td>{{ payment.payment_method }}</td>
+                    <td>{{ payment.transaction_id or 'N/A' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <h2>Add New Payment</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label for="amount">Payment Amount (₹) *</label>
+                <input type="number" id="amount" name="amount" class="form-control" 
+                       step="0.01" min="0.01" max="{{ fee.total_amount }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="payment_method">Payment Method *</label>
+                <select id="payment_method" name="payment_method" class="form-control" required>
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Credit/Debit Card</option>
+                    <option value="UPI">UPI</option>
+                    <option value="Net Banking">Net Banking</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="DD">Demand Draft</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="transaction_id">Transaction ID / Reference Number</label>
+                <input type="text" id="transaction_id" name="transaction_id" class="form-control" 
+                       placeholder="Optional">
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Record Payment</button>
+                <a href="{{ url_for('admin_fees') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .fee-info {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 15px;
+    }
+
+    .fee-info p {
+        margin: 10px 0;
+        font-size: 15px;
+    }
+
+    .card {
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}

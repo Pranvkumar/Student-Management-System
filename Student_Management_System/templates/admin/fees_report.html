@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Fee Report - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Fee Collection Report</h1>
+    <a href="{{ url_for('admin_reports') }}" class="btn btn-secondary">Back to Reports</a>
+</div>
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Program</th>
+                <th>Semester</th>
+                <th>Total Students</th>
+                <th>Total Fees (₹)</th>
+                <th>Collected (₹)</th>
+                <th>Pending (₹)</th>
+                <th>Collection %</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in report %}
+            <tr>
+                <td>{{ record.program }}</td>
+                <td>{{ record.semester }}</td>
+                <td>{{ record.total_students }}</td>
+                <td>₹{{ "{:,.2f}".format(record.total_fees) }}</td>
+                <td style="color: #27ae60; font-weight: bold;">₹{{ "{:,.2f}".format(record.total_collected) }}</td>
+                <td style="color: #e74c3c; font-weight: bold;">₹{{ "{:,.2f}".format(record.total_pending) }}</td>
+                <td>
+                    {% set collection_percent = (record.total_collected / record.total_fees * 100) if record.total_fees > 0 else 0 %}
+                    <strong style="color: {{ '#27ae60' if collection_percent >= 80 else '#f39c12' }};">
+                        {{ "{:.2f}".format(collection_percent) }}%
+                    </strong>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

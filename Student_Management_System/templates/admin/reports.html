@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Academic Reports</h1>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+
+<div class="admin-menu">
+    <h2>Available Reports</h2>
+    <div class="menu-grid">
+        <a href="{{ url_for('admin_student_report') }}" class="menu-item">
+            <h3>📊 Student Report</h3>
+            <p>Complete student records with enrollment and performance data</p>
+        </a>
+        
+        <a href="{{ url_for('admin_attendance_report') }}" class="menu-item">
+            <h3>📅 Attendance Report</h3>
+            <p>Course-wise attendance statistics and percentages</p>
+        </a>
+        
+        <a href="{{ url_for('admin_grades_report') }}" class="menu-item">
+            <h3>📈 Grades Report</h3>
+            <p>Performance analysis and grade distribution by course</p>
+        </a>
+        
+        <a href="{{ url_for('admin_fees_report') }}" class="menu-item">
+            <h3>💰 Fee Report</h3>
+            <p>Fee collection status by program and semester</p>
+        </a>
+    </div>
+</div>
+{% endblock %}

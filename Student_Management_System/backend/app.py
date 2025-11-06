@@ -433,5 +433,294 @@ def faculty_add_grades(course_id):
     
     return render_template('faculty/add_grades.html', students=students, course=course)
 
+# ==================== ADMIN FEE MANAGEMENT ROUTES ====================
+
+@app.route('/admin/fees')
+def admin_fees():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    
+    # Get all fees with student information
+    query = """SELECT f.*, s.first_name, s.last_name, s.program, s.semester,
+                      COALESCE(SUM(fp.amount), 0) as paid_amount,
+                      (f.total_amount - COALESCE(SUM(fp.amount), 0)) as balance
+               FROM Fees f
+               JOIN Students s ON f.student_id = s.student_id
+               LEFT JOIN Fee_Payments fp ON f.fee_id = fp.fee_id
+               GROUP BY f.fee_id
+               ORDER BY f.due_date DESC"""
+    
+    fees = db.execute_query(query)
+    
+    # Get summary stats
+    stats = {}
+    stats['total_fees'] = db.execute_query("SELECT COALESCE(SUM(total_amount), 0) as total FROM Fees")[0]['total']
+    stats['total_paid'] = db.execute_query("SELECT COALESCE(SUM(amount), 0) as total FROM Fee_Payments")[0]['total']
+    stats['total_pending'] = stats['total_fees'] - stats['total_paid']
+    stats['pending_count'] = db.execute_query("SELECT COUNT(*) as count FROM Fees WHERE status = 'Pending'")[0]['count']
+    
+    return render_template('admin/fees.html', fees=fees, stats=stats)
+
+@app.route('/admin/fees/add', methods=['GET', 'POST'])
+def admin_add_fee():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        student_id = request.form['student_id']
+        fee_type = request.form['fee_type']
+        total_amount = request.form['total_amount']
+        due_date = request.form['due_date']
+        academic_year = request.form['academic_year']
+        semester = request.form['semester']
+        
+        query = """INSERT INTO Fees (student_id, fee_type, total_amount, due_date, academic_year, semester, status)
+                   VALUES (%s, %s, %s, %s, %s, %s, 'Pending')"""
+        
+        result = db.execute_query(query, (student_id, fee_type, total_amount, due_date, academic_year, semester))
+        
+        if result:
+            flash('Fee record added successfully!', 'success')
+            return redirect(url_for('admin_fees'))
+        else:
+            flash('Error adding fee record', 'error')
+    
+    students = db.execute_query("SELECT * FROM Students ORDER BY first_name, last_name")
+    return render_template('admin/add_fee.html', students=students)
+
+@app.route('/admin/fees/payment/<int:fee_id>', methods=['GET', 'POST'])
+def admin_add_payment(fee_id):
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        amount = request.form['amount']
+        payment_method = request.form['payment_method']
+        transaction_id = request.form.get('transaction_id', '')
+        
+        query = """INSERT INTO Fee_Payments (fee_id, amount, payment_method, transaction_id)
+                   VALUES (%s, %s, %s, %s)"""
+        
+        result = db.execute_query(query, (fee_id, amount, payment_method, transaction_id))
+        
+        if result:
+            flash('Payment recorded successfully!', 'success')
+            return redirect(url_for('admin_fees'))
+        else:
+            flash('Error recording payment', 'error')
+    
+    fee = db.execute_query("""SELECT f.*, s.first_name, s.last_name, s.program
+                              FROM Fees f
+                              JOIN Students s ON f.student_id = s.student_id
+                              WHERE f.fee_id = %s""", (fee_id,))[0]
+    
+    payments = db.execute_query("SELECT * FROM Fee_Payments WHERE fee_id = %s ORDER BY payment_date DESC", (fee_id,))
+    
+    return render_template('admin/add_payment.html', fee=fee, payments=payments)
+
+# ==================== ADMIN REPORTS ROUTES ====================
+
+@app.route('/admin/reports')
+def admin_reports():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    
+    return render_template('admin/reports.html')
+
+@app.route('/admin/reports/students')
+def admin_student_report():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    
+    students = db.execute_query("""
+        SELECT s.*, u.email,
+               COUNT(DISTINCT e.course_id) as enrolled_courses,
+               AVG(g.marks_obtained / g.max_marks * 100) as avg_percentage
+        FROM Students s
+        JOIN Users u ON s.user_id = u.user_id
+        LEFT JOIN Enrollment e ON s.student_id = e.student_id
+        LEFT JOIN Grades g ON s.student_id = g.student_id
+        GROUP BY s.student_id
+        ORDER BY s.first_name, s.last_name
+    """)
+    
+    return render_template('admin/student_report.html', students=students)
+
+@app.route('/admin/reports/attendance')
+def admin_attendance_report():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    
+    report = db.execute_query("""
+        SELECT c.course_name, c.course_code,
+               COUNT(DISTINCT a.student_id) as total_students,
+               COUNT(*) as total_classes,
+               SUM(CASE WHEN a.status = 'Present' THEN 1 ELSE 0 END) as total_present,
+               ROUND((SUM(CASE WHEN a.status = 'Present' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2) as attendance_percentage
+        FROM Attendance a
+        JOIN Courses c ON a.course_id = c.course_id
+        GROUP BY a.course_id
+        ORDER BY c.course_name
+    """)
+    
+    return render_template('admin/attendance_report.html', report=report)
+
+@app.route('/admin/reports/grades')
+def admin_grades_report():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    
+    report = db.execute_query("""
+        SELECT c.course_name, c.course_code,
+               COUNT(DISTINCT g.student_id) as total_students,
+               AVG(g.marks_obtained / g.max_marks * 100) as avg_percentage,
+               MAX(g.marks_obtained / g.max_marks * 100) as max_percentage,
+               MIN(g.marks_obtained / g.max_marks * 100) as min_percentage
+        FROM Grades g
+        JOIN Courses c ON g.course_id = c.course_id
+        GROUP BY g.course_id
+        ORDER BY c.course_name
+    """)
+    
+    return render_template('admin/grades_report.html', report=report)
+
+@app.route('/admin/reports/fees')
+def admin_fees_report():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    
+    report = db.execute_query("""
+        SELECT s.program, s.semester,
+               COUNT(DISTINCT f.student_id) as total_students,
+               SUM(f.total_amount) as total_fees,
+               COALESCE(SUM(fp.amount), 0) as total_collected,
+               (SUM(f.total_amount) - COALESCE(SUM(fp.amount), 0)) as total_pending
+        FROM Fees f
+        JOIN Students s ON f.student_id = s.student_id
+        LEFT JOIN Fee_Payments fp ON f.fee_id = fp.fee_id
+        GROUP BY s.program, s.semester
+        ORDER BY s.program, s.semester
+    """)
+    
+    return render_template('admin/fees_report.html', report=report)
+
+# ==================== ADMIN ANNOUNCEMENTS ROUTES ====================
+
+@app.route('/admin/announcements')
+def admin_announcements():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    
+    # Create announcements table if it doesn't exist
+    create_table_query = """
+    CREATE TABLE IF NOT EXISTS Announcements (
+        announcement_id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(200) NOT NULL,
+        content TEXT NOT NULL,
+        target_audience ENUM('All', 'Students', 'Faculty') DEFAULT 'All',
+        priority ENUM('Low', 'Medium', 'High') DEFAULT 'Medium',
+        created_by INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        expires_at DATE,
+        status ENUM('Active', 'Expired', 'Draft') DEFAULT 'Active',
+        FOREIGN KEY (created_by) REFERENCES Users(user_id)
+    )
+    """
+    db.execute_query(create_table_query)
+    
+    announcements = db.execute_query("""
+        SELECT a.*, u.username as created_by_name
+        FROM Announcements a
+        JOIN Users u ON a.created_by = u.user_id
+        ORDER BY a.created_at DESC
+    """)
+    
+    return render_template('admin/announcements.html', announcements=announcements)
+
+@app.route('/admin/announcements/add', methods=['GET', 'POST'])
+def admin_add_announcement():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+        target_audience = request.form['target_audience']
+        priority = request.form['priority']
+        expires_at = request.form.get('expires_at', None)
+        status = request.form.get('status', 'Active')
+        
+        query = """INSERT INTO Announcements (title, content, target_audience, priority, created_by, expires_at, status)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)"""
+        
+        result = db.execute_query(query, (title, content, target_audience, priority, session['user_id'], expires_at, status))
+        
+        if result:
+            flash('Announcement posted successfully!', 'success')
+            return redirect(url_for('admin_announcements'))
+        else:
+            flash('Error posting announcement', 'error')
+    
+    return render_template('admin/add_announcement.html')
+
+@app.route('/admin/announcements/delete/<int:announcement_id>')
+def admin_delete_announcement(announcement_id):
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    
+    query = "DELETE FROM Announcements WHERE announcement_id = %s"
+    result = db.execute_query(query, (announcement_id,))
+    
+    if result:
+        flash('Announcement deleted successfully!', 'success')
+    else:
+        flash('Error deleting announcement', 'error')
+    
+    return redirect(url_for('admin_announcements'))
+
+# ==================== ADMIN FACULTY MANAGEMENT ROUTES ====================
+
+@app.route('/admin/faculty/add', methods=['GET', 'POST'])
+def admin_add_faculty():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        email = request.form['email']
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        department = request.form['department']
+        designation = request.form['designation']
+        phone = request.form['phone']
+        office_location = request.form.get('office_location', '')
+        specialization = request.form.get('specialization', '')
+        
+        # Insert into Users table
+        user_query = """INSERT INTO Users (username, password, email, role)
+                        VALUES (%s, %s, %s, 'faculty')"""
+        user_result = db.execute_query(user_query, (username, password, email))
+        
+        if user_result:
+            # Get the user_id
+            user = db.execute_query("SELECT user_id FROM Users WHERE username = %s", (username,))[0]
+            user_id = user['user_id']
+            
+            # Insert into Faculty table
+            faculty_query = """INSERT INTO Faculty (user_id, first_name, last_name, department, designation, phone, office_location, specialization)
+                              VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
+            faculty_result = db.execute_query(faculty_query, (user_id, first_name, last_name, department, designation, phone, office_location, specialization))
+            
+            if faculty_result:
+                flash('Faculty member added successfully!', 'success')
+                return redirect(url_for('admin_faculty'))
+            else:
+                flash('Error adding faculty member', 'error')
+        else:
+            flash('Error creating user account', 'error')
+    
+    return render_template('admin/add_faculty.html')
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
